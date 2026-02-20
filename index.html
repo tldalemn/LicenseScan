@@ -194,6 +194,66 @@
   .empty-state p { font-size: 12px; line-height: 1.7; }
 
   #upload-input { display: none; }
+
+  /* ---- MANUAL ENTRY ---- */
+  .no-id-toggle {
+    width: 100%; margin-bottom: 16px;
+    padding: 13px; border-radius: 10px;
+    border: 1px dashed rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.02);
+    color: var(--muted); font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 12px; letter-spacing: 0.5px;
+    cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+  }
+  .no-id-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .no-id-toggle.active { border-color: var(--yellow); color: var(--yellow); background: rgba(245,158,11,0.06); }
+
+  #manual-form {
+    background: var(--card);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 16px; padding: 16px;
+    margin-bottom: 14px; display: none;
+  }
+  #manual-form.visible { display: block; }
+
+  .manual-title {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 12px; color: var(--yellow);
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+
+  .manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .manual-field { display: flex; flex-direction: column; gap: 5px; }
+  .manual-field.full { grid-column: 1 / -1; }
+
+  .manual-field label {
+    font-size: 9px; color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .manual-field input {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 11px 12px;
+    color: var(--text); font-family: 'DM Mono', monospace;
+    font-size: 13px; outline: none; transition: border-color 0.2s;
+    width: 100%;
+  }
+  .manual-field input:focus { border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(245,158,11,0.1); }
+  .manual-field input::placeholder { color: var(--muted); opacity: 0.5; }
+
+  .manual-submit {
+    width: 100%; margin-top: 14px; padding: 14px;
+    border-radius: 10px; border: none;
+    background: linear-gradient(135deg, var(--yellow), #d97706);
+    color: #000; font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 13px; letter-spacing: 0.5px;
+    cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+  }
+  .manual-submit:active { transform: scale(0.98); }
+
 </style>
 </head>
 <body>
@@ -271,6 +331,51 @@
     </div>
 
     <input type="file" id="upload-input" accept="image/*" onchange="handleUpload(event)">
+
+    <!-- No ID Manual Entry Toggle -->
+    <button class="no-id-toggle" id="no-id-toggle" onclick="toggleManualForm()">
+      ✏️ No ID? Enter information manually
+    </button>
+
+    <!-- Manual Entry Form -->
+    <div id="manual-form">
+      <div class="manual-title">✏️ Manual Entry</div>
+      <div class="manual-grid">
+        <div class="manual-field">
+          <label>First Name *</label>
+          <input type="text" id="m-firstname" placeholder="John" autocomplete="given-name">
+        </div>
+        <div class="manual-field">
+          <label>Last Name *</label>
+          <input type="text" id="m-lastname" placeholder="Smith" autocomplete="family-name">
+        </div>
+        <div class="manual-field full">
+          <label>Street Address *</label>
+          <input type="text" id="m-address" placeholder="123 Main St" autocomplete="street-address">
+        </div>
+        <div class="manual-field">
+          <label>City</label>
+          <input type="text" id="m-city" placeholder="Stillwater" autocomplete="address-level2">
+        </div>
+        <div class="manual-field">
+          <label>State</label>
+          <input type="text" id="m-state" placeholder="MN" maxlength="2" autocomplete="address-level1">
+        </div>
+        <div class="manual-field">
+          <label>ZIP Code</label>
+          <input type="text" id="m-zip" placeholder="55082" inputmode="numeric" maxlength="10" autocomplete="postal-code">
+        </div>
+        <div class="manual-field">
+          <label>Date of Birth</label>
+          <input type="text" id="m-dob" placeholder="MM/DD/YYYY" inputmode="numeric" maxlength="10">
+        </div>
+        <div class="manual-field">
+          <label>License # (optional)</label>
+          <input type="text" id="m-license" placeholder="A12345678">
+        </div>
+      </div>
+      <button class="manual-submit" onclick="submitManual()">✓ Use This Information</button>
+    </div>
 
     <!-- Parsed Info -->
     <div id="parsed-info">
@@ -548,6 +653,7 @@ function saveRecord() {
     licenseNum: parsedData.licenseNum, dob: parsedData.dob, state: parsedData.state,
     location: getLocation(),
     materials: [...selectedMaterials],
+    manual: parsedData && parsedData.manual ? true : false,
     timestamp: new Date().toLocaleString()
   };
 
@@ -577,7 +683,10 @@ function renderRecords() {
     <div class="record-card">
       <div class="record-top">
         <div class="record-name">${r.firstName} ${r.lastName}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         ${r.location ? `<span class="record-location">📍 ${r.location}</span>` : ''}
+        ${r.manual ? `<span style="font-size:10px;background:rgba(245,158,11,0.12);color:var(--yellow);padding:3px 8px;border-radius:20px;font-family:'Syne',sans-serif;font-weight:700">✏️ MANUAL</span>` : ''}
+      </div>
       </div>
       <div class="record-address">🏠 ${r.address}</div>
       ${r.licenseNum ? `<div class="record-address">🪪 ${r.licenseNum}</div>` : ''}
@@ -595,6 +704,94 @@ function clearAll() {
   }
 }
 
+
+// ---- MANUAL ENTRY ----
+let manualFormOpen = false;
+
+function toggleManualForm() {
+  manualFormOpen = !manualFormOpen;
+  const form = document.getElementById('manual-form');
+  const toggle = document.getElementById('no-id-toggle');
+  form.classList.toggle('visible', manualFormOpen);
+  toggle.classList.toggle('active', manualFormOpen);
+  toggle.textContent = manualFormOpen ? '✕ Cancel manual entry' : '✏️ No ID? Enter information manually';
+  if (manualFormOpen) {
+    // Hide scan results if open
+    document.getElementById('parsed-info').classList.remove('visible');
+    document.getElementById('category-section').classList.remove('visible');
+    document.getElementById('save-btn').classList.remove('visible');
+    parsedData = null;
+    setTimeout(() => document.getElementById('m-firstname').focus(), 100);
+  }
+}
+
+function submitManual() {
+  const firstName = document.getElementById('m-firstname').value.trim();
+  const lastName  = document.getElementById('m-lastname').value.trim();
+  const address   = document.getElementById('m-address').value.trim();
+
+  if (!firstName || !lastName || !address) {
+    showToast('First name, last name & address are required', 'error');
+    return;
+  }
+
+  const city  = document.getElementById('m-city').value.trim();
+  const state = document.getElementById('m-state').value.trim().toUpperCase();
+  const zip   = document.getElementById('m-zip').value.trim();
+  const dob   = document.getElementById('m-dob').value.trim();
+  const licenseNum = document.getElementById('m-license').value.trim();
+
+  const fullAddress = [address, city, state, zip].filter(Boolean).join(', ');
+
+  parsedData = { firstName, lastName, address, city, state, zip, dob, licenseNum, expiry: '', manual: true };
+
+  // Show parsed info section with manual badge
+  const grid = document.getElementById('info-grid');
+  grid.innerHTML = `
+    <div class="info-field"><div class="field-label">First Name</div><div class="field-value">${firstName}</div></div>
+    <div class="info-field"><div class="field-label">Last Name</div><div class="field-value">${lastName}</div></div>
+    <div class="info-field full"><div class="field-label">Address</div><div class="field-value">${fullAddress}</div></div>
+    ${dob ? `<div class="info-field"><div class="field-label">Date of Birth</div><div class="field-value">${dob}</div></div>` : ''}
+    ${licenseNum ? `<div class="info-field"><div class="field-label">License #</div><div class="field-value">${licenseNum}</div></div>` : ''}
+    ${state ? `<div class="info-field"><div class="field-label">State</div><div class="field-value">${state}</div></div>` : ''}
+    <div class="info-field full" style="border-color:rgba(245,158,11,0.3)"><div class="field-label" style="color:var(--yellow)">Entry Type</div><div class="field-value" style="color:var(--yellow);font-size:11px">✏️ Manual — No ID presented</div></div>
+  `;
+
+  document.getElementById('parsed-info').classList.add('visible');
+  document.getElementById('category-section').classList.add('visible');
+  document.getElementById('save-btn').classList.add('visible');
+  selectedMaterials.clear();
+  document.querySelectorAll('.mat-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('selected-summary').textContent = 'No materials selected';
+
+  // Close the manual form
+  manualFormOpen = false;
+  document.getElementById('manual-form').classList.remove('visible');
+  document.getElementById('no-id-toggle').classList.remove('active');
+  document.getElementById('no-id-toggle').textContent = '✏️ No ID? Enter information manually';
+
+  // Clear form fields
+  ['m-firstname','m-lastname','m-address','m-city','m-state','m-zip','m-dob','m-license'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+
+  showToast('Manual info ready — select materials & save', 'info');
+  window.scrollTo({ top: document.getElementById('parsed-info').offsetTop - 20, behavior: 'smooth' });
+}
+
+// Auto-format DOB field as MM/DD/YYYY
+document.addEventListener('DOMContentLoaded', () => {
+  const dobInput = document.getElementById('m-dob');
+  if (dobInput) {
+    dobInput.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g,'');
+      if (v.length >= 3 && v.length <= 4) v = v.slice(0,2)+'/'+v.slice(2);
+      else if (v.length > 4) v = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4,8);
+      this.value = v;
+    });
+  }
+});
+
 // ---- CSV EXPORT ----
 const MATERIAL_IDS = ['how','electronics','recycle','paper-shredding','sharps','lawn-waste','tree-waste'];
 
@@ -611,7 +808,7 @@ function exportCSV() {
     const matCols = MATERIAL_IDS.map(id => mats.includes(id) ? 'TRUE' : 'FALSE');
     return [
       r.firstName, r.lastName, r.address, r.licenseNum,
-      r.dob, r.state, r.location,
+      r.dob, r.state, r.location, r.manual ? 'Manual' : 'Scanned',
       ...matCols,
       r.timestamp
     ].map(v => `"${(v||'').replace(/"/g,'""')}"`);
