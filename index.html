@@ -596,17 +596,26 @@ function clearAll() {
 }
 
 // ---- CSV EXPORT ----
+const MATERIAL_IDS = ['how','electronics','recycle','paper-shredding','sharps','lawn-waste','tree-waste'];
+
 function exportCSV() {
   const records = getRecords();
   if (!records.length) { showToast('No records to export', 'info'); return; }
 
-  const headers = ['First Name','Last Name','Address','License #','DOB','State','Location','Materials','Timestamp'];
-  const rows = records.map(r => [
-    r.firstName, r.lastName, r.address, r.licenseNum,
-    r.dob, r.state, r.location,
-    (r.materials||[]).map(m => MATERIAL_LABELS[m]||m).join(' | '),
-    r.timestamp
-  ].map(v => `"${(v||'').replace(/"/g,'""')}"`));
+  // One column per material, TRUE/FALSE
+  const matHeaders = MATERIAL_IDS.map(id => MATERIAL_LABELS[id]);
+  const headers = ['First Name','Last Name','Address','License #','DOB','State','Location',...matHeaders,'Timestamp'];
+
+  const rows = records.map(r => {
+    const mats = r.materials || [];
+    const matCols = MATERIAL_IDS.map(id => mats.includes(id) ? 'TRUE' : 'FALSE');
+    return [
+      r.firstName, r.lastName, r.address, r.licenseNum,
+      r.dob, r.state, r.location,
+      ...matCols,
+      r.timestamp
+    ].map(v => `"${(v||'').replace(/"/g,'""')}"`);
+  });
 
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -618,7 +627,7 @@ function exportCSV() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast(`✓ Exported ${records.length} records`, 'success');
+  showToast('✓ Exported ' + records.length + ' records', 'success');
 }
 
 // ---- UI ----
